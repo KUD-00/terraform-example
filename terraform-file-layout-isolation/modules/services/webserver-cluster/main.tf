@@ -1,16 +1,3 @@
-terraform {
-  backend "s3" {
-    # Replace this with your bucket name!
-    bucket         = "seki-no-terraform-up-and-running-state"
-    key            = "stage/services/webserver-cluster/terraform.tfstate"
-    region         = "us-east-2"
-
-    # Replace this with your DynamoDB table name!
-    dynamodb_table = "seki-no-terraform-up-and-running-locks"
-    encrypt        = true
-  }
-}
-
 provider "aws" {
   region = "us-east-2"
 }
@@ -30,8 +17,8 @@ data "terraform_remote_state" "db" {
   backend = "s3"
 
   config = {
-    bucket = "seki-no-terraform-up-and-running-state"
-    key    = "stage/data-stores/mysql/terraform.tfstate"
+    bucket = var.db_remote_state_bucket
+    key    = var.db_remote_state_key
     region = "us-east-2"
   }
 }
@@ -82,7 +69,7 @@ resource "aws_autoscaling_group" "example" {
 }
 
 resource "aws_security_group" "instance" {
-  name = "terraform-example-instance"
+  name = "${var.cluster_name}-instance"
 
   ingress {
     from_port   = var.server_port
@@ -117,7 +104,7 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_security_group" "alb" {
-  name = "terraform-example-alb"
+  name = "${var.cluster_name}-alb"
 
   # Allow inbound HTTP requests
   ingress {
